@@ -1,0 +1,132 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8">
+  <meta http-equiv="X-UA-Compatible" content="IE=edge">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Document</title>
+</head>
+
+<body>
+  <canvas id="canvas" width="600" height="600"></canvas>
+  <script>
+    const canvas = document.getElementById('canvas')
+    // 创建2d渲染上下文
+    const ctx = canvas.getContext('2d')
+    setInterval(() => {
+      // 保存画布初始状态
+      ctx.save()
+      // 清除上一次的绘制内容，clearRect通过把像素设置为透明以达到擦除一个矩形区域的目的
+      ctx.clearRect(0, 0, 600, 600)
+
+      // 移动坐标原点，此时(300, 300) 变成了坐标的 (0, 0)
+      ctx.translate(300, 300)
+      // 保存当前画布状态
+      ctx.save()
+
+      /** ----------画外框---------- */
+      // 开始路径
+      ctx.beginPath()
+      // 画弧形用 arc(圆弧中心点X, 圆弧中心点Y, 圆弧半径, 起始弧度, 结束弧度) 默认顺时针
+      // 弧度是用一个角以其顶点为圆心的弧长除以半径得到的数值
+      ctx.arc(0, 0, 100, 0, 2 * Math.PI)
+      // 描边
+      ctx.stroke()
+      // 结束路径
+      ctx.closePath()
+
+      /** ----------画中心---------- */
+      ctx.beginPath()
+      ctx.arc(0, 0, 5, 0, 2 * Math.PI)
+      ctx.stroke()
+      ctx.closePath()
+
+      /** ----------画分钟刻度---------- */
+      // 设置画线时的线宽
+      ctx.lineWidth = 1
+      // 每个分钟刻度所占弧度
+      const minRad = 2 * Math.PI / 60
+      for (let i = 0; i < 60; i++) {
+        // 旋转坐标系
+        ctx.rotate(minRad)
+        ctx.beginPath()
+        // 移动绘制点
+        ctx.moveTo(90, 0)
+        // 连线 相当于(90, 0)与(100, 0)点间路径连线
+        ctx.lineTo(100, 0)
+        // 描边(给刚刚的路径上色)
+        ctx.stroke()
+        ctx.closePath()
+      }
+      // 恢复画布状态
+      // 由于我们刚刚旋转了坐标系，为了方便进行小时刻度绘制，我们将坐标系恢复为第一次储存时的状态
+      ctx.restore()
+      // restore是一个出栈操作，为了方便下次恢复，我们再储存一次
+      ctx.save()
+
+      /** ----------绘制小时刻度---------- */
+      ctx.lineWidth = 5
+      const hourRad = 2 * Math.PI / 12
+      for (let i = 0; i < 12; i++) {
+        ctx.rotate(hourRad)
+        ctx.beginPath()
+        ctx.moveTo(85, 0)
+        ctx.lineTo(100, 0)
+        ctx.stroke()
+        ctx.closePath()
+      }
+      ctx.restore()
+      ctx.save()
+
+      /** ----------获取当前时分秒---------- */
+      let time = new Date()
+      let hour = time.getHours() % 12
+      let min = time.getMinutes()
+      let sec = time.getSeconds()
+
+      /** ----------绘制时针---------- */
+      // 时针弧度 = 当前小时的位置 + 当前小时已过时间的百分比 - 90度对应的弧度
+      // - 90度对应的弧度是因为默认x轴的位置是水平的，而12点方向是垂直的
+      const hourHandRad = ((2 * Math.PI / 12) * hour) + ((2 * Math.PI / 12) * (min / 60)) - (Math.PI / 2)
+      ctx.rotate(hourHandRad)
+      ctx.beginPath()
+      ctx.moveTo(-10, 0)
+      ctx.lineTo(40, 0)
+      ctx.lineWidth = 10
+      ctx.stroke()
+      ctx.closePath()
+      ctx.restore()
+      ctx.save()
+
+      /** ----------绘制分针---------- */
+      const minHandRad = ((2 * Math.PI / 60) * min) + ((2 * Math.PI / 60) * (sec / 60)) - (Math.PI / 2)
+      ctx.rotate(minHandRad)
+      ctx.beginPath()
+      ctx.moveTo(-10, 0)
+      ctx.lineTo(60, 0)
+      ctx.lineWidth = 5
+      ctx.strokeStyle = 'blue'
+      ctx.stroke()
+      ctx.closePath()
+      ctx.restore()
+      ctx.save()
+
+      /** ----------绘制秒针---------- */
+      const secHandRad = (2 * Math.PI / 60) * sec - Math.PI / 2
+      ctx.rotate(secHandRad)
+      ctx.beginPath()
+      ctx.moveTo(-10, 0)
+      ctx.lineTo(80, 0)
+      ctx.strokeStyle = 'red'
+      ctx.stroke()
+      ctx.closePath()
+      ctx.restore()
+
+      ctx.restore()
+    })
+
+  </script>
+</body>
+
+</html>

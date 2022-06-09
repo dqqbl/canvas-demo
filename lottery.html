@@ -1,0 +1,91 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8">
+  <meta http-equiv="X-UA-Compatible" content="IE=edge">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Document</title>
+</head>
+<style>
+  body {
+    margin: 0;
+    height: 100vh;
+    display: grid;
+    place-items: center;
+  }
+
+  .text {
+    /* 禁止文字选中 */
+    user-select: none;
+  }
+
+  .lottery {
+    position: relative;
+    display: grid;
+    place-items: center;
+    width: 300px;
+    height: 100px;
+    background: repeating-linear-gradient(135deg, #ccc 0 20px, skyblue 20px 40px);
+    font-size: 24px;
+  }
+
+  #canvas {
+    position: absolute;
+    inset: 0;
+    cursor: grab;
+  }
+</style>
+
+<body>
+  <div class="lottery">
+    <span class="text">Some Words</span>
+    <canvas id="canvas" width="300" height="100"></canvas>
+  </div>
+  <script>
+    const canvas = document.getElementById('canvas')
+    const ctx = canvas.getContext('2d')
+
+    /** ----------绘制封面---------- */
+    ctx.fillStyle = 'darkgray'
+    ctx.fillRect(0, 0, 300, 100)
+
+    /** ----------绘制文字---------- */
+    ctx.fillStyle = '#fff'
+    // 设置字体属性，必须带上字体名
+    ctx.font = "bold 48px serif"
+    // textAlign的center对照的是文字的x坐标，因此想要水平居中，文字的起始坐标应该是画布宽的一半
+    ctx.textAlign = 'center'
+    ctx.textBaseline = 'middle'
+    // ctx.fillText(文本, 文本起点x坐标, 文本起点y坐标, [绘制的最大宽度]);
+    ctx.fillText('刮开此涂层', 150, 50)
+
+    /** ----------控制刮卡---------- */
+    // 注意：通过这种方式绘制路径，当鼠标移动速度过快时会有路径不连贯问题
+    let isDrawing = false
+    canvas.onmousedown = (e) => {
+      isDrawing = true
+    }
+    canvas.onmousemove = (e) => {
+      if (!isDrawing) return
+      // 计算鼠标在canvas里的位置
+      const x = e.pageX - canvas.offsetParent.offsetLeft
+      const y = e.pageY - canvas.offsetParent.offsetTop
+      // globalCompositeOperation 用于控制绘制新形状时与旧形状的合成方式
+      // destination-out表示现有内容保持在新图形不重叠的地方，即鼠标绘制的地方会变透明
+      ctx.globalCompositeOperation = 'destination-out'
+      // 鼠标绘制过的位置画圆
+      ctx.arc(x, y, 15, 0, 2 * Math.PI)
+      // 填充圆形
+      ctx.fill()
+    }
+    canvas.onmouseup = () => {
+      isDrawing = false
+    }
+    document.onmouseup = () => {
+      isDrawing = false
+    }
+  </script>
+</body>
+
+</html>

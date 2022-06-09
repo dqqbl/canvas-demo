@@ -1,0 +1,190 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8">
+  <meta http-equiv="X-UA-Compatible" content="IE=edge">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Document</title>
+</head>
+<style>
+  .art-board {
+    width: 600px;
+    height: 500px;
+    padding: 10px;
+    background-color: pink;
+    border-radius: 4px;
+  }
+
+  .toolbar {
+    display: flex;
+    align-items: center;
+    height: 30px;
+    column-gap: 20px;
+    margin-bottom: 10px;
+  }
+
+  .item {
+    width: 30px;
+    height: 30px;
+    background-color: skyblue;
+    display: grid;
+    place-items: center;
+    border-radius: 4px;
+    cursor: pointer;
+  }
+
+  .rect {
+    width: 15px;
+    height: 10px;
+    border: 2px solid;
+  }
+
+  .circle {
+    width: 13px;
+    height: 13px;
+    border: 2px solid;
+    border-radius: 50%;
+  }
+
+  #canvas {
+    background-color: #fff;
+    border: 1px solid;
+  }
+</style>
+
+<body>
+  <div class="art-board">
+    <div class="toolbar">
+      <div class="item" id="brush">🖌️</div>
+      <div class="item" id="rect">
+        <div class="rect"></div>
+      </div>
+      <div class="item" id="circle">
+        <div class="circle"></div>
+      </div>
+      <button id="clearBtn">清空</button>
+      <button id="saveBtn">保存</button>
+    </div>
+    <canvas id="canvas" width="600px" height="450px"></canvas>
+  </div>
+  <script>
+    const canvas = document.getElementById('canvas')
+    const brush = document.getElementById('brush')
+    const rect = document.getElementById('rect')
+    const circle = document.getElementById('circle')
+    const clearBtn = document.getElementById('clearBtn')
+    const saveBtn = document.getElementById('saveBtn')
+    const ctx = canvas.getContext('2d')
+    const color = '#000'
+    let beginX = 0
+    let beginY = 0
+    // 当前选中的操作类型，画笔brush / 矩形rect / 圆形circle
+    let type = 'brush'
+    let isDrawing = false
+    // 绘制结果
+    let imageData = null
+
+    // 用于将背景色涂成白色，避免保存时背景为透明
+    const restart = () => {
+      ctx.beginPath()
+      ctx.fillStyle = '#fff'
+      ctx.rect(0, 0, 600, 450)
+      ctx.fill()
+      ctx.closePath()
+      imageData = ctx.getImageData(0, 0, 600, 450)
+      ctx.fillStyle = color
+      ctx.strokeStyle = color
+    }
+    restart()
+
+
+
+    brush.onclick = () => { type = 'brush' }
+    rect.onclick = () => { type = 'rect' }
+    circle.onclick = () => { type = 'circle' }
+
+    // 清空按钮
+    clearBtn.onclick = () => {
+      ctx.clearRect(0, 0, 600, 450)
+      imageData = null
+      restart()
+    }
+    // 保存按钮
+    saveBtn.onclick = () => {
+      // toDataURL 可以将canvas生成一个前缀为 data: 协议的URL，默认生成png
+      const url = canvas.toDataURL()
+      // 动态生成a标签实现点击下载
+      const a = document.createElement("a")
+      // 设置下载的文件名
+      a.download = "art-board-img"
+      a.href = url
+      document.body.appendChild(a)
+      a.click()
+      document.body.removeChild(a)
+    }
+
+
+    // 不同类型对应的操作函数
+    const handler = {
+      // 注意：通过这种方式绘制路径，当鼠标移动速度过快时会有路径不连贯问题
+      brush: (e) => {
+        const x = e.pageX - canvas.offsetLeft
+        const y = e.pageY - canvas.offsetTop
+        ctx.beginPath()
+        ctx.arc(x, y, 10, 0, 2 * Math.PI)
+        ctx.fill()
+        ctx.closePath()
+      },
+      rect: (e) => {
+        const x = e.pageX - canvas.offsetLeft
+        const y = e.pageY - canvas.offsetTop
+        // 鼠标移动过程中会不断触发重复绘制，因此需先清除移动过程中绘制的图形
+        ctx.clearRect(0, 0, 600, 450)
+        // 恢复为mousedown时的内容
+        imageData && ctx.putImageData(imageData, 0, 0, 0, 0, 600, 450)
+        ctx.beginPath()
+        ctx.rect(beginX, beginY, x - beginX, y - beginY)
+        ctx.stroke()
+        ctx.closePath()
+      },
+      circle: (e) => {
+        const x = e.pageX - canvas.offsetLeft
+        const y = e.pageY - canvas.offsetTop
+        ctx.clearRect(0, 0, 600, 450)
+        imageData && ctx.putImageData(imageData, 0, 0, 0, 0, 600, 450)
+        ctx.beginPath()
+        // Math.round 四舍五入
+        // Math.sqrt 返回一个数的平方根，这里通过勾股定理设置圆的半径
+        ctx.arc(
+          beginX,
+          beginY,
+          Math.round(
+            Math.sqrt((x - beginX) * (x - beginX) + (y - beginY) * (y - beginY))
+          ),
+          0,
+          2 * Math.PI
+        )
+        ctx.stroke()
+        ctx.closePath()
+      },
+    }
+
+    document.body.onmouseup = () => { isDrawing = false }
+    canvas.onmousedown = (e) => {
+      isDrawing = true
+      beginX = e.pageX - canvas.offsetLeft
+      beginY = e.pageY - canvas.offsetTop
+    }
+    canvas.onmouseup = () => {
+      isDrawing = false
+      imageData = ctx.getImageData(0, 0, 600, 450)
+    }
+    canvas.onmousemove = (e) => {
+      if (!isDrawing) return
+      handler[type](e)
+    }
+  </script>
+</body>
+
+</html>
